@@ -1,0 +1,25 @@
+---
+
+- name: Check existence of Jellyfin service
+  ansible.builtin.stat:
+    path: "{{ devture_systemd_docker_base_systemd_path }}/jellyfin.service"
+  register: jellyfin_service_stat
+
+- when: jellyfin_service_stat.stat.exists | bool
+  block:
+    - name: Ensure Jellyfin is stopped
+      ansible.builtin.systemd:
+        name: jellyfin
+        state: stopped
+        daemon_reload: true
+
+    - name: Ensure Jellyfin systemd service doesn't exist
+      ansible.builtin.file:
+        path: "{{ devture_systemd_docker_base_systemd_path }}/jellyfin.service"
+        state: absent
+
+    - name: Ensure Jellyfin base path doesn't exist
+      ansible.builtin.file:
+        path: "{{ jellyfin_base_path }}"
+        state: absent
+

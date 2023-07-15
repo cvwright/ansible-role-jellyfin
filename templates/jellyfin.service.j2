@@ -1,0 +1,41 @@
+[Unit]
+Description=Jellyfin media server
+Requires=docker.service
+After=docker.service
+
+DefaultDependencies=no
+
+[Service]
+Type=simple
+Environment="HOME=/root"
+ExecStartPre=-/usr/bin/env sh -c '/usr/bin/env docker kill {{ jellyfin_identifier }} 2>/dev/null || true'
+ExecStartPre=-/usr/bin/env sh -c '/usr/bin/env docker rm {{ jellyfin_identifier }} 2>/dev/null || true'
+
+ExecStart=/usr/bin/env docker run 
+                        --rm \
+                        --name {{ jellyfin_identifier }} \
+			--log-driver=none \
+			--user={{ jellyfin_uid }}:{{ jellyfin_gid }} \
+			--cap-drop=ALL \
+			--read-only \
+			--tmpfs=/tmp:rw,noexec,nosuid,size=2500m \
+			--network={{ jellyfin_container_network }} \
+{% if jellyfin_hwaccel_intel_enabled %}
+                        --device {{ jellyfin_hwaccel_intel_device }} \
+{% endif %}
+			--mount type=bind,src={{ jellyfin_cache_path }},dst=/cache \
+			--mount type=bind,src={{ jellyfin_config_path }},dst=/config \
+			--mount type=bind,src={{ jellyfin_data_path }},dst=/data \
+			--mount type=bind,src={{ jellyfin_log_path }},dst=/log \
+			--mount type=bind,src={{ jellyfin_media_path }},dst=/media \
+			{{ jellyfin_docker_image }}
+
+ExecStop=-/usr/bin/env sh -c '/usr/bin/env docker kill {{ jellyfin_identifier }} 2>/dev/null || true'
+ExecStop=-/usr/bin/env sh -c '/usr/bin/env docker rm {{ jellyfin_identifier }} 2>/dev/null || true'
+ExecReload=/usr/bin/env docker exec {{ jellyfin_identifier }} /bin/sh -c 'kill -HUP 1'
+Restart=always
+RestartSec=30
+SyslogIdentifier={{ jellyfin_identifier }}
+
+[Install]
+WantedBy=multi-user.target

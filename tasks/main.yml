@@ -1,0 +1,17 @@
+---
+
+- tags:
+    - setup-all
+    - setup-jellyfin
+    - install-all
+    - install-jellyfin
+  block:
+    - when: jellyfin_enabled | bool
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/setup_install.yml"
+
+- tags:
+    - setup-all
+    - setup-jellyfin
+  block:
+    - when: not jellyfin_enabled | bool
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/setup_uninstall.yml"

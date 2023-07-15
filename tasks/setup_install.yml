@@ -1,0 +1,48 @@
+---
+
+- name: Ensure Jellyfin config path exists
+  ansible.builtin.file:
+    path: "{{ jellyfin_config_path }}"
+    state: directory
+    mode: 0750
+    owner: "{{ jellyfin_username }}"
+    group: "{{ jellyfin_groupname }}"
+
+- name: Ensure Jellyfin cache path exists
+  ansible.builtin.file:
+    path: "{{ jellyfin_cache_path }}"
+    state: directory
+    mode: 0770
+    owner: "{{ jellyfin_username }}"
+    group: "{{ jellyfin_groupname }}"
+
+- name: Ensure Jellyfin configuration is installed
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/jellyfin/jellyfin.toml.j2"
+    dest: "{{ jellyfin_config_path }}/jellyfin.toml"
+    mode: 0644
+    owner: "{{ jellyfin_username }}"
+    group: "{{ jellyfin_groupname }}"
+
+- name: Ensure jellyfin systemd service is installed
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/jellyfin/systemd/jellyfin.service.j2"
+    dest: "{{ devture_systemd_docker_base_systemd_path }}/jellyfin.service"
+    mode: 0644
+
+- name: Ensure Jellyfin container network is created
+  community.general.docker_network:
+    name: "{{ jellyfin_container_network }}"
+    driver: bridge
+
+- name: Ensure Jellyfin container image is pulled
+  community.docker.docker_image:
+    name: "{{ jellyfin_docker_image }}"
+    source: "{{ 'pull' if ansible_version.major > 2 or ansible_version.minor > 7 else omit }}"
+    force_source: "{{ jellyfin_docker_image_force_pull if ansible_version.major > 2 or ansible_version.minor >= 8 else omit }}"
+    force: "{{ omit if ansible_version.major > 2 or ansible_version.minor >= 8 else jellyfin_docker_image_force_pull }}"
+  register: result
+  retries: "{{ devture_playbook_help_container_retries_count }}"
+  delay: "{{ devture_playbook_help_container_retries_delay }}"
+  until: result is not failed
+

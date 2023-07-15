@@ -1,0 +1,37 @@
+---
+# Jellyfin
+
+jellyfin_enabled: false
+
+jellyfin_identifier: "jellyfin"
+
+jellyfin_docker_image_name_prefix: "docker.io/"
+jellyfin_docker_image_tag: "latest"
+jellyfin_docker_image: "{{ jellyfin_docker_image_name_prefix }}jellyfin/jellyfin:{{ jellyfin_docker_image_tag }}"
+jellyfin_docker_image_force_pull: "{{ jellyfin_docker_image.endswith(':latest') }}"
+
+jellyfin_base_path: "/jellyfin"
+jellyfin_config_path: "{{ jellyfin_base_path }}/config"
+jellyfin_cache_path: "{{ jellyfin_base_path }}/cache"
+jellyfin_data_path: "{{ jellyfin_base_path }}/data"
+jellyfin_log_path: "{{ jellyfin_base_path }}/log"
+
+# List of systemd services that jellyfin.service depends on
+jellyfin_systemd_required_services_list: ["docker.service"]
+
+# List of systemd services that jellyfin.service wants
+jellyfin_systemd_wanted_services_list: []
+
+jellyfin_container_name: "{{ jellyfin_identifier }}"
+
+# The base container network. It will be auto-created by this role if it doesn't exist already.
+jellyfin_container_network: "{{ jellyfin_identifier }}"
+
+# A list of additional container networks that the container would be connected to.
+# The role does not create these networks, so make sure they already exist.
+# Use this to expose this container to another reverse proxy, which runs in a different container network.
+jellyfin_container_additional_networks: []
+
+# Use Intel hardware acceleration for FFMPEG
+jellyfin_hwaccel_intel_enabled: false
+jellyfin_hwaccel_intel_device: /dev/dri/renderD128
